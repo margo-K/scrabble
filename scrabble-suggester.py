@@ -2,32 +2,9 @@ import itertools
 import heapq
 from scrabble import ngram,ismatch
 import cPickle
-import pdb
 from functools import partial
+import sys
 
-from queries import generate_queries
-import time
-
-def run_with_log(g):
-	log =[]
-	failures = 0
-	failures_list = []
-	for q,k in generate_queries():
-		before = time.time()
-		results = g.top_results(q,k)
-		after = time.time()
-		print q,k,after-before
-
-		if after-before > .001:
-			if results:
-				log.append((q,after-before))
-			else:
-				failures+=1
-				failures_list.append(q)
-		log.sort(key=lambda x: x[1],reverse=True)
-	print "Total Over:{}".format(len(log))
-	print log
-	print "Failures{}:{}".format(failures,failures_list)
 
 class GramSuggester(object):
 	def __init__(self,index_name='gramindex.txt',maxn=4):
@@ -58,50 +35,49 @@ class GramSuggester(object):
 		"""Generator that yields ranks of words matching gram, in 
 		descending order of scrabble score (and ascending rank)
 
-		Ex: values('octo') => [33883, 42033, 42956, 42957, 48766, 52321, 52322, 52323, 59771, 63517, 63518, 64582,
-		 71175, 74865, 74866, 75892, 82157, 85543, 85544, 91969]
+		Ex: values('octo') => [33883, 42033, 42956, 42957, 48766, 52321, 52322, 52323, 
+		59771, 63517, 63518, 64582, 71175, 74865, 74866, 75892, 82157, 85543, 85544, 91969]
 
 		"""
 		index = self.index[len(gram)]
 
 		return (value for value in index[gram])
-		# for item in index[gram]: # generator expression
-		# 	yield item
-
-	# def get_buckets(self,gramlist,n):
-	# 	"""Returns a list of generators for each n-gram in the list"""
-	# 	index = self.index[n]
-	# 	return [self.values(gram) for gram in gramlist]
+	
 
 	def intersect(self,*grams):
-	    """Returns a generator of all values in the intersection of the sorted
-	    iterators, *its"""
-	    l = [self.values(gram) for gram in grams]
-	    if len(l)==1:
-	    	yield self.values(gram).next()#want to change to both returning an iterator
+	    """Returns a generator that yields all values matching all n-grams in grams """
+	    gram_matches = [self.values(gram) for gram in grams]
 
-	    for value, instances in itertools.groupby(heapq.merge(*l)): ## Figure out what this does when intersection is nothing
-	        if len(list(instances)) == len(l):
-			    yield value
+	    if len(gram_matches)==1:
+	    	return gram_matches.pop()
+
+		return (value for value,instances in itertools.groupby(heapq.merge(*gram_matches)) 
+			if len(list(instances))==len(gram_matches))
 
 	def top_results(self,Q,K):
 		grams,n = self.maxgram(Q)
 		matches_query = partial(ismatch,Q)
 
 		try:
-			words = itertools.imap(self.word,self.intersect(*grams))
-			exact_matches = itertools.ifilter(matches_query,words)
-			return [item for item in itertools.islice(exact_matches,K)]
+			#All words that contain all the n-grams of the query string
+			possible_matches = itertools.imap(self.word,self.intersect(*grams)) 
+
+			#All words that exactly match the query string
+			exact_matches = itertools.ifilter(matches_query,possible_matches)
+
+			return list(itertools.islice(exact_matches,K))
 		except KeyError:
-			# print "{} was not found".format(Q)
 			return []
 
 if __name__ == '__main__':
-	g = GramSuggester()
-	# print g.maxgram('hat')
-	# print g.maxgram('octopus')
-	# print list(g.values('octo'))
-	print g.top_results('minty',10)
-	run_with_log(g)
-	# pdb.set_trace()
+	if len(sys.argv)==3:
+		Q = sys.argv[1]
+		K = int(sys.argv[2])
+		print "Loading Index..."
+		g = GramSuggester()
+		print "\n-----Results-----"
+		for result in g.top_results(Q,K):
+			print result
+	else:
+		print "Correct Usage: scrabble-suggester Q K"
 
