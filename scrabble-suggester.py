@@ -3,14 +3,10 @@
 import itertools
 import heapq
 from scrabble import ngram,ismatch,file_namer
-import cPickle
 from functools import partial
 import sys
-import importlib
 import os
-import pdb
 import string
-si = __import__('scrabble-indexer')
 
 class GramSuggester(object):
 	def __init__(self,maxn=4,index_dir='grams',word_dir='words'):
@@ -119,4 +115,3 @@ def main(argv=None,printing=True):
 
 if __name__ == '__main__':
 	main()
-	# if len(sys.argv)==3:
