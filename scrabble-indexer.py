@@ -3,47 +3,46 @@
 import cPickle
 import sys
 import os
-from scrabble import ngram,sorted_word_list,gram_file
+from scrabble import ngram,sorted_word_list,file_namer
 from functools import partial
 
 import pdb
 
 
 class GramIndexer(object):
-	def __init__(self,source,index_folder='grams/',maxn=4,word_index='words.txt'):
+	def __init__(self,source,index_dir='grams',maxn=4,word_dir='words'):
 		self._dictionary = sorted_word_list(source)
-		self._word_index = word_index
 		self._maxn = maxn
-		self._index_folder = index_folder
-		self._gram_file = partial(gram_file,folder=self._index_folder)
+		self._word_dir = word_dir
+		self._index_dir = index_dir
+		self._index = {}
 
 	@property
 	def ranked_words(self):
 		"""Returns a sorted list of the dictionary words and their rankings"""
+
 		return enumerate(self._dictionary) # ranked words
 
 	def supergram(self,word):
-		"""Generates lists of all n-grams of the word, in the range n=1..self.maxn
-		"""
+		"""Generates lists of all n-grams of the word, in the range n=1..self.maxn"""
+
 		max_length = min(len(word),self._maxn)
 		for i in range(1,max_length+1):
 			yield ngram(word,n=i)
 
 
-	def index_grams(self,word_rank,grams):
+	def index(self,word_rank,grams):
 		"""
-		Adds each word to all the files that contain its gram
-
+		Adds each word to the matches for each if its n-grams, for n=1...maxn
 		* uses the word's rank instead string as the value
-
 		"""
 		for gram in grams:
-			with open(self._gram_file(gram),'a') as f:
-				f.write(str(word_rank)+'\n')
+			entry = self._index.setdefault(gram,[])
+			entry.append(word_rank)
 
 	def generate_index(self):
 		"""Indexes all n-grams of size 1..maxn that appear in the Scrabble dictionary,
-		storing the ranking of each word that contains that n-gram
+		storing the absolute ranking of each word that contains that n-gram
 
 		Ex: if maxn==4:
 			To find all matches for 'ourd': 
@@ -55,16 +54,21 @@ class GramIndexer(object):
 				88030 => 'sourdines'
 			    93060 => 'gourdes', etc.
 			                                  """
-		if not os.path.exists(index_folder):
-			os.makedirs(index_folder)
 			
-		for position,word in self.ranked_words:
-			for grams in self.supergram(word): # make so all words indexed before writing to a file
-				self.index_grams(position,grams)
+		for word_rank,word in self.ranked_words:
+			for grams in self.supergram(word):
+				self.index(word_rank,grams)
 
-		with open(self._word_index,'w') as f:
-			word_index = {word:rank for rank,word in self.ranked_words}
-			cPickle.dump(word_index)
+	def export(self,dic,folder,single_val=False):
+		if not os.path.exists(folder):
+			os.makedirs(folder)
+		for key,values in dic.iteritems():
+			with open(file_namer(folder,key),'w') as f:
+				if single_val:
+					f.write(values+'\n')
+				else:
+					for value in values:
+						f.write(str(value)+'\n')
 
 def main(argv=None):
     if argv is None:
@@ -72,10 +76,11 @@ def main(argv=None):
     if len(sys.argv)==2:
     	word_source = sys.argv[1]
     	g = GramIndexer(word_source)
-    	with open(g._word_index,'w') as f:
-			word_index = {rank:word for rank,word in g.ranked_words}
-			cPickle.dump(word_index,f,2)
-    	# g.generate_index()
+    	g.generate_index()
+    	word_index = {rank:word for rank,word in g.ranked_words}
+
+    	g.export(g._index,g._index_dir)
+    	g.export(word_index,g._word_dir,single_val=True)
     else:
     	print "Correct Usage: scrabble-indexer word-list"
 
