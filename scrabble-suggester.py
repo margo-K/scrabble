@@ -12,20 +12,21 @@ import pdb
 si = __import__('scrabble-indexer')
 
 class GramSuggester(object):
-	def __init__(self,index_folder='grams',maxn=4):
+	def __init__(self,index_folder='grams',maxn=4,word_index='words.txt'):
 		self._maxn = maxn
 		self._index_folder = index_folder
 		self._gram_file = partial(gram_file,self._index_folder)
-		self._open_files = [] # list of all files opened for a given query
-		self._words = si.GramIndexer('dictionary.txt')._words
+		self._open_files = [] #all open files at a given time
+		with open(word_index,'r') as f:
+			self._words = cPickle.load(f)
 
 
 	def maxgram(self,Q):
-		"""Returns a tuple of the maximum size n-grams of Q and that maxn value
+		"""Returns 
 
 		Ex: if self.maxn = 4 (i.e. the index only indexes up to 4-grams):
-			maxgram('octopus') => (set(['octo', 'topu', 'ctop', 'opus']), 4)
-			maxgram('hat') =>  (set[('hat')], 3)
+			maxgram('octopus') => ['octo', 'topu', 'ctop', 'opus'], 4)
+			maxgram('hat') =>  ['hat'], 3)
 			                 """
 		maxsize = min(len(Q),self._maxn)
 		return ngram(Q,maxsize) if maxsize > 0 else []
@@ -49,7 +50,9 @@ class GramSuggester(object):
 		return (int(word.strip('\n')) for word in open_file)
 
 	def _merge(self,*its):
-		"""Merges the sorted iterators in *its, returning an empty list if any of them is empty"""
+		"""Returns an iterator over the merged elements in *its, or [] if one of its 
+		is empty"""
+
 		if [] in its:
 			return []
 		return heapq.merge(*its)
@@ -87,16 +90,24 @@ class GramSuggester(object):
 			f.close()
 		return results
 
-
-if __name__ == '__main__':
-	if len(sys.argv)==3:
-		Q = sys.argv[1]
-		K = int(sys.argv[2])
-		print "Loading Index..."
-		g = GramSuggester()
-		print "\n-----Results-----"
-		for result in g.top_results(Q,K):
-			print result
-	else:
+def main(argv=None,printing=True):
+    if argv is None:
+        argv = sys.argv
+    if len(argv)==3:
+    	Q = argv[1]
+    	K = int(argv[2])
+    	g = GramSuggester()
+    	results = g.top_results(Q,K)
+    	if printing:
+	    	print "\n-----Results-----"
+	    	for result in results:
+	    		print result
+    	return results
+    else:
 		print "Correct Usage: scrabble-suggester Q K"
 
+
+
+if __name__ == '__main__':
+	main()
+	# if len(sys.argv)==3:

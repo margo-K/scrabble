@@ -10,13 +10,12 @@ import pdb
 
 
 class GramIndexer(object):
-	def __init__(self,source,index_folder='grams/',maxn=4):
+	def __init__(self,source,index_folder='grams/',maxn=4,word_index='words.txt'):
 		self._dictionary = sorted_word_list(source)
-		self._words = {num:word for num,word in self.ranked_words}
+		self._word_index = word_index
 		self._maxn = maxn
 		self._index_folder = index_folder
 		self._gram_file = partial(gram_file,folder=self._index_folder)
-
 
 	@property
 	def ranked_words(self):
@@ -63,10 +62,23 @@ class GramIndexer(object):
 			for grams in self.supergram(word): # make so all words indexed before writing to a file
 				self.index_grams(position,grams)
 
+		with open(self._word_index,'w') as f:
+			word_index = {word:rank for rank,word in self.ranked_words}
+			cPickle.dump(word_index)
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    if len(sys.argv)==2:
+    	word_source = sys.argv[1]
+    	g = GramIndexer(word_source)
+    	with open(g._word_index,'w') as f:
+			word_index = {rank:word for rank,word in g.ranked_words}
+			cPickle.dump(word_index,f,2)
+    	# g.generate_index()
+    else:
+    	print "Correct Usage: scrabble-indexer word-list"
+
 if __name__ == '__main__':
-	if len(sys.argv)==2:
-		word_source = sys.argv[1]
-		g = GramIndexer(word_source)
-		g.generate_index()
-	else:
-		print "Correct Usage: scrabble-indexer word-list"
+	main()
+
