@@ -23,7 +23,10 @@ Instead of loading all matches at each stage into memory, iterators are returned
 results only as requested. This creates a processing pipeline connecting the top level
 function, ```top_results(Q,K)``` used in Step 4, to the lowest-level 
 function ```_matches(gram)```, used in Step 1. This significantly improves the performance
-of the suggester, particularly for cases where K is small.
+of the suggester, particularly for cases where K is small. Additionally, the two lowest 
+level iterators, _matches(gram), which yields values matching a given gram, and _merge(*its), 
+which yields values of the sorted, merged iterators (its), short-circuit to return empty lists
+when their inputs make it impossible to yield matches for any K.
 
 ###Indexing
 The scrabble suggester creates an index of all 1..maxn-grams in the word list and stores
@@ -80,3 +83,17 @@ Additionally, because the ```open``` operation on a file in python supports iter
 
 Another option considered was the ```cPickle``` module, a faster implementation of the ```pickle``` module, which supports serialization and de-serialization of python objects. However, in repeated trials, unpickling became the bottleneck in the performance of the suggester, so this approach was abandoned.
 
+##Contents
+* scrabble-suggester
+* scrabble-indexer
+
+* scrabble.py: helper functions used by both indexer 
+and suggester
+* queries.py: query generation
+* trials.py: performance timing
+* tests.py: unit tests
+
+* analysis.md: analyzing performance
+
+##Requirements
+* matplotlib and numpy are required to generate the graphs in trials
