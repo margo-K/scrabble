@@ -1,7 +1,6 @@
+#!/usr/bin/env python
+
 import unittest
-import importlib
-import scrabble as sb
-import pdb
 from brutesuggester import BruteSuggester
 indexer = __import__('scrabble-indexer')
 suggester = __import__('scrabble-suggester')
@@ -36,25 +35,25 @@ class SuggesterTests(unittest.TestCase):
 		self.suggester = suggester.GramSuggester()
 		self.source = ''
 
-	def test_maxgram(self):
+	def test_maxgrams(self):
 		self.suggester._maxn = 3
 		Q = 'apple'
-		failures = set(self.suggester.maxgram(Q)).difference(set(['app','ppl','ple']))
+		failures = set(self.suggester.maxgrams(Q)).difference(set(['app','ppl','ple']))
 		self.assertEqual(failures,set([]))
 
-	def test_null_maxgram(self):
+	def test_null_maxgrams(self):
 		self.suggester._maxn = 3
 		Q = ''
-		self.assertEqual(self.suggester.maxgram(Q),[])
+		self.assertEqual(self.suggester.maxgrams(Q),[])
 	
 	def test_word(self):
 		rank,word = (0,'photosynthesizing')
-		self.assertEqual(self.suggester.word(rank),word)
+		self.assertEqual(self.suggester._word(rank),word)
 
 	def test_intersect(self):
 		"""Checks that values yielded are all matches to the substring combo"""
 		grams = ['cart','rats']
-		matches = self.suggester.intersect(*grams)
+		matches = self.suggester.gramintersect(*grams)
 		failures = [word for word in matches if 'cart' not in word or 'rats' not in word]
 		self.assertEqual(failures,[])
 
@@ -63,31 +62,28 @@ class SuggesterTests(unittest.TestCase):
 
 	def test_intersect_single(self):
 		Q = 'art'
-		grams = self.suggester.maxgram(Q)
-		self.assertEqual(list(self.suggester.intersect(*grams)),list(self.suggester.matches(Q)))
+		grams = self.suggester.maxgrams(Q)
+		self.assertEqual(list(self.suggester._gram_intersect(*grams)),list(self.suggester._matches(Q)))
 		
-	def test__intersect(self):
+	def test_intersect(self):
 		l1 = [2,5,7,9,13]
 		l2 = [1,2,11,12,13]
-		pdb.set_trace()
 		self.assertEqual(list(self.suggester._intersect(l1,l2)),[2,13])
 
-	def test__intersect_empty(self):
+	def test_intersect_empty(self):
 		l1 = [1,2,3,4,5]
 		l2 = [8,9,10,11]
 		self.assertEqual(list(self.suggester._intersect(l1,l2)),[])
 
-	def test_gram_matches(self):
-		pass
-	def test_gram_matches_not_in_dic(self):
+	def test_matches_not_in_dic(self):
 		Q = 'xyzw'
-		self.assertEqual(list(self.suggester.gram_matches(Q)),[])
+		self.assertEqual(list(self.suggester._matches(Q)),[])
 		
 	def test_exact_matches(self):
 		Q = 'hippo'
-		results = self.suggester.exact_matches(Q)
-		failures = [result for result in results if Q not in result]
-		self.assertEqual(failures,[])
+		words = ['hippopotamus','liposuction','hippocampus','other']
+		results = self.suggester.exact_matches(Q,words)
+		self.assertEqual(list(results),['hippopotamus','hippocampus'])
 
 	def test_top_results(self):
 		Q,K = 'creat',100
@@ -104,12 +100,6 @@ class SuggesterTests(unittest.TestCase):
 		Q,K = 'kps',10
 		max_grams = ['kp','ps']
 		self.assertEqual(list(self.suggester.top_results(Q,K)),[])
-
-class ScrabbleTests(unittest.TestCase):
-	def test_gramfile(self):
-		gram = 'dog'
-		folder = 'test'
-		self.assertEqual(sb.file_namer(folder,gram),'test/dog.txt')
 	
 
 if __name__ == '__main__':
