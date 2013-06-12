@@ -9,7 +9,7 @@ grams_setup="ss = __import__('scrabble-suggester');name='suggester';Q='{}';K={};
 grams_fn = 'ss.main([name,Q,K],printing)'
 
 
-def time(qsize,k,number=10,sample_size=500): # Sample size = 500
+def time(qsize,k,number=10,sample_size=100): # Sample size = 500
     """Returns a list of times of trials of the k top results of a query of size qsize"""
     log = []
     for q,k in queries(qsize=qsize,K=k,sample_size=sample_size):
@@ -79,7 +79,6 @@ class TrialRunner(object):
 
         for plot_val in plot_vals:
             color = y_colors.next()
-            # pdb.set_trace()
             y_vals = y_func(x_data,plot_val)
             ax.scatter(x_data,y_vals,color=color,label=labelstr.format(plot_val))
 
@@ -91,7 +90,6 @@ class TrialRunner(object):
 
     def print_stats(self,axis):
         axis_log = self._log[axis]
-        pdb.set_trace()
         print '\n{:^10}|{:^20}|{:^20}|{:^20}|{:^20}|'.format(axis,'Mean','StdDev','Max','Sample Size')
         print '{:-^10}|{:-^20}|{:-^20}|{:-^20}{:^20}|'.format('','','','','')
         for key,values in sorted(axis_log.items()):
