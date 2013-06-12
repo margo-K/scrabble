@@ -46,9 +46,9 @@ class GramIndexer(object):
 				88030 => 'sourdines'
 			    93060 => 'gourdes', etc.                     """
 		for word_rank,word in self.ranked_words:
-				self._maxwordlength = max(self._maxwordlength,len(word))
-				for grams in self.supergram(word):
-					self.index(word_rank,grams)
+			self._maxwordlength = max(self._maxwordlength,len(word))
+			for grams in self.supergram(word):
+				self.index(word_rank,grams)
 
 	def export(self,dic,folder,single_val=False):
 		"""Writes indexes to files"""
@@ -69,10 +69,10 @@ def main(argv=None):
     	word_source = sys.argv[1]
     	g = GramIndexer(word_source)
     	g.generate_index()
-    	# word_index = {rank:word for rank,word in g.ranked_words}
+    	word_index = {rank:word for rank,word in g.ranked_words}
 
-    	# g.export(g._index,g._index_dir)
-    	# g.export(word_index,g._word_dir,single_val=True)
+    	g.export(g._index,g._index_dir)
+    	g.export(word_index,g._word_dir,single_val=True)
     	g.export({'maxwordlength':g._maxwordlength},'.',single_val=True)
     else:
     	print "Correct Usage: scrabble-indexer word-list"
