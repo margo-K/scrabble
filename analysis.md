@@ -107,7 +107,7 @@ the majority of the time in the main function is spent in the ```_words``` funct
 which translates word rankings into words themselves. Though the percall time is less 
 than 1 millisecond (the calibration of cProfile), the function call time accumulates as K grows.
 
-**K=1000
+**K=1000**
 ```
 $python -m cProfile scrabble-suggester cat 1000
 
@@ -158,7 +158,7 @@ $python -m cProfile scrabble-suggester e 1000
    1001    0.004    0.000    0.004    0.000 {method 'readline' of 'file' objects}
       1    0.003    0.003    0.122    0.122 scrabble-suggester:83(_top)
 ```
-**Uncommon 1-gram: Q='z'
+**Uncommon 1-gram: Q='z'**
 ```
 $python -m cProfile scrabble-suggester z 1000
 
@@ -177,7 +177,7 @@ For a useable app, we will assume that a query time in the milliseconds is
 usually sufficiently fast and anything better than that is very good.
 
 ####Worst Case
-Worse Case Time: 0.0338598012924 seconds, for K=1000, Qsize=1
+Worse Case Time: 0.0338598012924 seconds, for K=1000, Qsize=1.
 However, worst-case query times an order of magnitude greater than milliseconds
 only occur in  other cases that have been tracked:
 * Qsize = 2,3
@@ -200,7 +200,7 @@ deviation slower than the mean time. This means that with regards to average cas
 the queries match or surpass our metric for speed.
 
 ###Varying Q-Length
-![Plot of Query Time by Q](https://raw.github.com/margo-K/scrabble/master/plotallQ.png)
+![Plot of Query Time by Q](https://github.com/margo-K/scrabble/blob/master/plotallQ.png)
 
 
  Qsize     |        Mean        |       StdDev       |        Max         |    Sample Size     |
