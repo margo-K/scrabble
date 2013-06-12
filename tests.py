@@ -117,7 +117,7 @@ class LoggerTests(unittest.TestCase):
 
 	def test_get_time_logging(self):
 		qsize, k = 3,100
-		total_trials = 500 #default value
+		total_trials = 100 #default value
 		self.t._log['Q'][qsize] = [1]
 		len_before = len(self.t._log['Q'][qsize])
 		self.t.get_time(3,10)
