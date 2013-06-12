@@ -200,6 +200,7 @@ deviation slower than the mean time. This means that with regards to average cas
 the queries match or surpass our metric for speed.
 
 ###Varying Q-Length
+**Click me for Plot of Query Timy by Q**
 ![Plot of Query Time by Q](https://github.com/margo-K/scrabble/blob/master/plotallQ.png)
 
 
@@ -237,6 +238,7 @@ the queries match or surpass our metric for speed.
 
 
 ###Varying K
+**Click me for Plot of Query Timy by K**
 ![Plot of Query Time by K](https://github.com/margo-K/scrabble/blob/master/plotallK.png)
 
 
