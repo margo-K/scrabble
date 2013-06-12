@@ -201,7 +201,7 @@ the queries match or surpass our metric for speed.
 
 ###Varying Q-Length
 **Click me for Plot of Query Timy by Q**
-![Plot of Query Time by Q](https://github.com/margo-K/scrabble/blob/master/plotallQ.png)
+![Plot of Query Time by Q](https://raw.github.com/margo-K/scrabble/master/plotallQ.png)
 
 
  Qsize     |        Mean        |       StdDev       |        Max         |    Sample Size     |
@@ -238,8 +238,7 @@ the queries match or surpass our metric for speed.
 
 
 ###Varying K
-**Click me for Plot of Query Timy by K**
-![Plot of Query Time by K](https://github.com/margo-K/scrabble/blob/master/plotallK.png)
+![Plot of Query Time by K](https://raw.github.com/margo-K/scrabble/master/plotallK.png)
 
 
     K     |        Mean        |       StdDev       |        Max         |    Sample Size    |
