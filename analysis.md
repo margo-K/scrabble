@@ -97,6 +97,107 @@ is recorded of these trials is recorded because, as the timeit documentation not
 variance in times is usually caused by other processes, not the code itself. 
 
 ##Performance
+###Trends
+From ```plotallQ```, the graph of query time versus Q-length, we can see that query time 
+stabilizes as query-length grows, which makes sense given the short-circuiting of queries 
+longer than the maximum word length in the dictionary. We can also see that for shorter 
+query lengths (under 5), there is a large different between K values, with a leap in query 
+time for ```K = 500``` and ```K = 1000```. Using cProfile, for a sample query we  see that 
+the majority of the time in the main function is spent in the ```_words``` function, 
+which translates word rankings into words themselves. Though the percall time is less 
+than 1 millisecond (the calibration of cProfile), the function call time accumulates as K grows.
+
+**K=1000
+```
+$python -m cProfile scrabble-suggester cat 1000
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      1    0.001    0.001    0.032    0.032   scrabble-suggester:102(main)
+    856    0.007    0.000    0.026    0.000   scrabble-suggester:31(_word)
+```
+However, for a lower value of K, the total contribution of _word is 
+still in the milliseconds.
+
+**K=100**
+```
+$python -m cProfile scrabble-suggester cat 100
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      100    0.001    0.000    0.003    0.000 scrabble-suggester:31(_word)
+```
+If we anticipate a lot of queries with large K-values(over ~200), we 
+should consider removing the rankings abstraction layer entirely and storing 
+the words themselves. However, if we were putting this in production with
+a datastore that could accommodate storing ints directly, we would need 
+to consider that storing ints instead of words in the index would take
+up roughly half as much space (when our ints are in the range 0...100,000, as
+they are with this dictionary).
+
+
+From ```plotallK```, the graph of query-time vs. K-values, we can see that
+K values affect query time dramatically for small query lengths and have little
+to no effect on large queries. Interestingly, this cannot be attributed entirely
+to the short-circuiting of longer queries because this trend is observable at
+```Q = 10``` and ```Q = 5```, which are far below the max word length of 21 
+for the corpus. For queries of length 1 and 2, growth of query time grows 
+approximately linearly with K.
+
+We see from profiling a few test cases that in addition to the costs associated
+with _word, the cost of file I/O starts to become more significant when a
+large number of matches are asked for because a much larger number of files
+must be searched to ensure that the top K matches have been found. 
+
+**Common 1-gram: Q='e'**
+```
+$python -m cProfile scrabble-suggester e 1000
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      1    0.002    0.002    0.124    0.124   scrabble-suggester:102(main)
+   1000    0.093    0.000    0.116    0.000 scrabble-suggester:31(_word)
+   1002    0.007    0.000    0.007    0.000 {open}
+   1001    0.004    0.000    0.004    0.000 {method 'readline' of 'file' objects}
+      1    0.003    0.003    0.122    0.122 scrabble-suggester:83(_top)
+```
+**Uncommon 1-gram: Q='z'
+```
+$python -m cProfile scrabble-suggester z 1000
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.039    0.039 scrabble-suggester:102(main)
+     1000    0.014    0.000    0.033    0.000 scrabble-suggester:31(_word)
+        1    0.002    0.002    0.038    0.038 scrabble-suggester:83(_top)
+     1001    0.004    0.000    0.004    0.000 {method 'readline' of 'file' objects}
+     1002    0.006    0.000    0.006    0.000 {open}
+     1001    0.005    0.000    0.005    0.000 {posix.stat}
+
+
+```
+###Specifics
+For a useable app, we will assume that a query time in the milliseconds is 
+usually sufficiently fast and anything better than that is very good.
+
+####Worst Case
+Worse Case Time: 0.0338598012924 seconds, for K=1000, Qsize=1
+However, worst-case query times an order of magnitude greater than milliseconds
+only occur in  other cases that have been tracked:
+* Qsize = 2,3
+* K-value=500,1000 
+Considering again the particular application, it seems clear that these types of 
+queries, while possible, do not make much sense in terms of effectively using
+a Scrabble solver. A person using the app would have to be requesting 500 or 1000 
+matches for a single letter, far more than a person could reasonably process if 
+a human is the intended end user. If however, the solver is used in another program
+that say returns all matches to a substring that are composed only of letters in your
+hand, this would be a reasonable or perhaps even expected query size.
+
+####Mean Time & Std Dev
+For all categories shown in the tables, mean query time does not exceed 6.22 ms
+and for all but 6 entries in the tables (low Qsize; high K-size), mean query time 
+is less than 1 ms. Additionally, we not that standard deviations in all cases are less 
+than or equal to the order of magnitude of the mean but only 4 table entries have actual 
+standard deviation values which would change the order of magnitude of 1 standard 
+deviation slower than the mean time. This means that with regards to average case performance, 
+the queries match or surpass our metric for speed.
 
 ###Varying Q-Length
 ![Plot of Query Time by Q](https://raw.github.com/margo-K/scrabble/master/plotallQ.png)
