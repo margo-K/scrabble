@@ -72,6 +72,21 @@ if __name__=='__main__':
         g.timen(k)
         g.report(g.logn,'N',g.n_vals)
 
+import csv
+import datetime as dt
+import matplotlib.pyplot as plt
+
+x,y = [],[]
+csv_reader = csv.reader(open('data.csv'))
+for line in csv_reader:
+    x.append(int(line[0]))
+    y.append(dt.datetime.strptime(line[1],'%M:%S.%f'))
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(y,x,'o-')
+fig.autofmt_xdate()
+
     
 
 
