@@ -11,12 +11,13 @@ import string
 class GramSuggester(object):
 	def __init__(self,maxn=4,index_dir='grams',word_dir='words'):
 		self._maxn = maxn
-
-		self._word_file_fn = partial(file_namer,word_dir)
-		self._gram_file_fn = partial(file_namer,index_dir)
+		self._word_file_fn = partial(file_namer,word_dir) #generates names of files for rank-> word index
+		self._gram_file_fn = partial(file_namer,index_dir) #generates names of files for gram-> matches index
 		self._open_files = [] #all open files at a given time
+		with open('maxwordlength.txt','r') as f:
+			self._max_word_length = int(f.readline().strip(string.whitespace))
 
-	def maxgram(self,Q):
+	def maxgrams(self,Q):
 		"""Returns a list of the n-grams of maxsize for a given query
 
 		Ex: if self.maxn = 4 (i.e. the index only indexes up to 4-grams):
@@ -27,7 +28,7 @@ class GramSuggester(object):
 		return ngram(Q,maxsize) if maxsize > 0 else []
 
 
-	def word(self,word_rank):
+	def _word(self,word_rank):
 		"""Returns the word corresponding to an absolute word_rank
 
 		Ex: word(0) =>  photosynthesizing, 
@@ -39,7 +40,7 @@ class GramSuggester(object):
 			with open(word_file,'r') as f:
 				return f.readline().strip(string.whitespace)
 
-	def matches(self,gram):
+	def _matches(self,gram):
 		"""Returns an open file that corresponds to matches to gram"""
 		gram_file = self._gram_file_fn(gram)
 
@@ -55,44 +56,47 @@ class GramSuggester(object):
 		"""Returns an iterator over the merged elements in *its, or [] if one of its 
 		is empty"""
 		return heapq.merge(*its) if [] not in its else []
-		
+
 	def _intersect(self,*its):
-		"""Returns a generator that yields all values that appear in all *its """
-		intersection = (value for value,instances in itertools.groupby(self._merge(*its)) if len(list(instances))==len(its))
+		"""Returns a generator that yields all values that appear in the sorted iterators *its """
+		return (value for value,instances in itertools.groupby(self._merge(*its)) 
+			     if len(list(instances))==len(its))
 
-		return intersection
-
-	def intersect(self,*grams):
-	    """Returns a generator that yields all values matching all n-grams in grams """
+	def _gram_intersect(self,*grams):
+	    """Returns a generator that yields all values that match all grams in *grams """
 	    if len(grams)==1:
-	    	return self.matches(grams[0])
-	    intersection = self._intersect(*map(self.matches,grams))
+	    	return self._matches(grams[0])
+	    intersection = self._intersect(*map(self._matches,grams))
 	    return intersection
 		
-	def gram_matches(self,Q):
-		"""Returns a lazy iterator over all words that contain matches to all ngrams
-		in the query string"""
-		gram_s = itertools.imap(self.word,self.intersect(*self.maxgram(Q)))
-		return gram_s
+	def _words(self,rank_it):
+		"""Returns a lazy iterator of the words that correspond to the ranks in rank_it
+		Ex: words([69474,80707]) => iter(['bourdons','bourdon']) """
+		return itertools.imap(self._word,rank_it)
 	
-	def exact_matches(self,Q):
-		"""Returns a lazy iterator over all words that match the query string
+	def exact_matches(self,Q,word_it):
+		"""Returns a lazy iterator over all words in word_it that match the query string
 		exactly"""
 		matches_query = partial(ismatch,Q)
-		return itertools.ifilter(matches_query,self.gram_matches(Q))
+		return itertools.ifilter(matches_query,word_it)
 
-	def close_files(self):
+	def _top(self,K,it):
+		"""Returns the top K items from it"""
+		return list(itertools.islice(it,K))
+
+	def _close_files(self):
 		"""Closes all files that have been opened over the course of the query"""
 		for f in self._open_files:
 			f.close()
 			self._open_files.remove(f)
 	
 	def top_results(self,Q,K):
-		"""Returns an iterator over the top K words that match the
-		query string"""
+		"""Returns the top K words that match Q"""
+		intersection = self._words(self._gram_intersect(*self.maxgrams(Q)))
+		matches = self.exact_matches(Q,intersection)
+		results = self._top(K,matches)
 
-		results = list(itertools.islice(self.exact_matches(Q),K))
-		self.close_files()
+		self._close_files()
 		return results
 
 def main(argv=None,printing=True):
@@ -102,7 +106,10 @@ def main(argv=None,printing=True):
     	Q = argv[1]
     	K = int(argv[2])
     	g = GramSuggester()
-    	results = g.top_results(Q,K)
+    	if len(Q) > g._max_word_length:
+    		results = []
+    	else: 
+    		results = g.top_results(Q,K)
     	if printing:
 	    	print "\n-----Results-----"
 	    	for result in results:
