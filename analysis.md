@@ -30,8 +30,8 @@ by checking the length of a query before querying the index (and short circuitin
 if it is too long). Once we establish that this short-circuiting works, we know
 that these queries will not be the bottlenecks in our performance time, and
 we can instead sample from the space of queries of length 1...max_word_length. 
-In our sample word_list, that is 21, but the value is dynamically created for each
-word list.
+In our sample word list that is value 21, but the value is dynamically calculated
+for each word list.
 
 
 We can see from the diagram below that the number of possible n-length
@@ -46,7 +46,7 @@ of the program's performance.
 Along with the fact that an important parameter of the indexer is maxn, the 
 maximum length sequence indexed, these reasons suggest that it
 might be useful to also separately measure and analyze the performance metrics 
-for different query lengths(k).
+for different query lengths.
 
 **Total n-Length Sequences**
 
@@ -98,7 +98,7 @@ variance in times is usually caused by other processes, not the code itself.
 
 ##Performance
 ###Trends
-From ```plotallQ```, the graph of query time versus Q-length, we can see that query time 
+From **Graph 1**, the graph of query time versus Q-length, we can see that query time 
 stabilizes as query-length grows, which makes sense given the short-circuiting of queries 
 longer than the maximum word length in the dictionary. We can also see that for shorter 
 query lengths (under 5), there is a large different between K values, with a leap in query 
@@ -134,7 +134,7 @@ up roughly half as much space (when our ints are in the range 0...100,000, as
 they are with this dictionary).
 
 
-From ```plotallK```, the graph of query-time vs. K-values, we can see that
+From **Graph2**, the graph of query-time vs. K-values, we can see that
 K values affect query time dramatically for small query lengths and have little
 to no effect on large queries. Interestingly, this cannot be attributed entirely
 to the short-circuiting of longer queries because this trend is observable at
@@ -190,7 +190,7 @@ a human is the intended end user. If however, the solver is used in another prog
 that say returns all matches to a substring that are composed only of letters in your
 hand, this would be a reasonable or perhaps even expected query size.
 
-####Mean Time & Std Dev
+####Mean Time
 For all categories shown in the tables, mean query time does not exceed 6.22 ms
 and for all but 6 entries in the tables (low Qsize; high K-size), mean query time 
 is less than 1 ms. Additionally, we not that standard deviations in all cases are less 
@@ -199,8 +199,8 @@ standard deviation values which would change the order of magnitude of 1 standar
 deviation slower than the mean time. This means that with regards to average case performance, 
 the queries match or surpass our metric for speed.
 
-###Varying Q-Length
-**Click me for Plot of Query Timy by Q**
+###Graphs and Tables
+####Graph 1: By Q-Length
 ![Plot of Query Time by Q](https://raw.github.com/margo-K/scrabble/master/plotallQ.png)
 
 
@@ -237,7 +237,7 @@ the queries match or surpass our metric for speed.
     29    | 2.08265781403e-05  | 3.05415419837e-06  | 3.33070755005e-05  |        500         |
 
 
-###Varying K
+####Graph 2: By K
 ![Plot of Query Time by K](https://raw.github.com/margo-K/scrabble/master/plotallK.png)
 
 
