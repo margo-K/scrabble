@@ -5,7 +5,6 @@ indexer = __import__('scrabble-indexer')
 suggester = __import__('scrabble-suggester')
 from trials import TrialRunner
 from brutesuggester import BruteSuggester
-import pdb
 
 class SuggesterTests(unittest.TestCase):
 	def setUp(self):
@@ -75,6 +74,7 @@ class SuggesterTests(unittest.TestCase):
 		max_grams = ['kp','ps']
 		self.assertEqual(list(self.suggester.top_results(Q,K)),[])
 
+
 class IndexerTests(unittest.TestCase):
 	def setUp(self):
 		self.indexer = indexer.GramIndexer('dictionary.txt')
@@ -92,6 +92,7 @@ class IndexerTests(unittest.TestCase):
 	def test_supergram_empty(self):
 		word = ''
 		self.assertEqual([],list(self.indexer.supergram(word)))
+
 
 class LoggerTests(unittest.TestCase):
 	def setUp(self):
@@ -116,7 +117,7 @@ class LoggerTests(unittest.TestCase):
 
 	def test_get_time_logging(self):
 		qsize, k = 3,100
-		total_trials = 10 #default value
+		total_trials = 500 #default value
 		self.t._log['Q'][qsize] = [1]
 		len_before = len(self.t._log['Q'][qsize])
 		self.t.get_time(3,10)
@@ -128,9 +129,6 @@ class LoggerTests(unittest.TestCase):
 		self.t.plotQ(qsizes)
 		self.assertEqual(qsizes,sorted(self.t._log['Q'].keys()))
 
-
-
-	
 
 if __name__ == '__main__':
 	unittest.main()
