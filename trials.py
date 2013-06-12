@@ -1,33 +1,31 @@
 #!/usr/bin/env python
 
-from pprint import pprint
 from queries import queries
-import pdb
 import math
 from timeit import Timer
-import sys
 import matplotlib.pyplot as plt
+
 grams_setup="ss = __import__('scrabble-suggester');name='suggester';Q='{}';K={};printing=False"
 grams_fn = 'ss.main([name,Q,K],printing)'
 
 
-def avg(ls):
-	return sum(ls)/float(len(ls))
-
-def stdev(ls):
-	return math.sqrt(variance(ls))
-	
-def variance(ls):
-	return avg(map(lambda x: (x - avg(ls))**2, ls))
-
-def time(qsize,k,number=10,sample_size=100): # Sample size = 500
+def time(qsize,k,number=10,sample_size=500): # Sample size = 500
     """Returns a list of times of trials of the k top results of a query of size qsize"""
     log = []
-    for qsize,k in queries(size=qsize,K=k,sample_size=sample_size):
-        timer = Timer(grams_fn,grams_setup.format(qsize,k))
-        time = min(timer.repeat(3,number=number))/number
-        log.append(time)
+    for q,k in queries(qsize=qsize,K=k,sample_size=sample_size):
+        timer = Timer(grams_fn,grams_setup.format(q,k))
+        trial_time = min(timer.repeat(3,number=number))/number
+        log.append(trial_time)
     return log
+
+def avg(ls):
+    return sum(ls)/float(len(ls))
+
+def stdev(ls):
+    return math.sqrt(variance(ls))
+    
+def variance(ls):
+    return avg(map(lambda x: (x - avg(ls))**2, ls))
 
 def stats(values):
     """Returns the sample mean, standard deviation, maxvalue and 
@@ -44,12 +42,12 @@ class TrialRunner(object):
         self._log = {'K':{},'Q':{}} #Ex: self._log['K'][10]=> all times for K=10
 
     def plotK(self,kvals):
-        self._plot(x_vals=kvals,y_func=self._qys,labelstr="Q:{}",plot_vals=self._q_sizes,
-        title=self._plot_title.format('K-values'),xlabel='K',ylabel=self._y_label,filename='plotallQ.png')
+        self._plot(x_vals=kvals,y_func=self._kys,labelstr="Q:{}",plot_vals=self._q_sizes,
+        title=self._plot_title.format('K-values'),xlabel='K',ylabel=self._y_label,filename='plotallK.png')
 
     def plotQ(self,qsizes):
-        self._plot(x_vals=qsizes,y_func=self._kys,labelstr="K:{}",plot_vals=self._k_vals,
-        title=self._plot_title.format('Q-Length'),xlabel='Q-Length',ylabel=self._y_label,filename='plotallK.png')
+        self._plot(x_vals=qsizes,y_func=self._qys,labelstr="K:{}",plot_vals=self._k_vals,
+        title=self._plot_title.format('Q-Length'),xlabel='Q-Length',ylabel=self._y_label,filename='plotallQ.png')
 
     def _kys(self,ks,qsize):
         """Returns a list of timings for k values in ks, where qsize is kept constant"""
@@ -67,7 +65,7 @@ class TrialRunner(object):
         Kentry.extend(times)
 
     def get_time(self,qsize,k):
-        """Times """
+        """Times queries of size qsize with k value = k and returns their average"""
         ts = time(qsize,k)
         self._log_times(qsize,k,ts)
         return avg(ts)
@@ -81,6 +79,7 @@ class TrialRunner(object):
 
         for plot_val in plot_vals:
             color = y_colors.next()
+            # pdb.set_trace()
             y_vals = y_func(x_data,plot_val)
             ax.scatter(x_data,y_vals,color=color,label=labelstr.format(plot_val))
 
@@ -92,6 +91,7 @@ class TrialRunner(object):
 
     def print_stats(self,axis):
         axis_log = self._log[axis]
+        pdb.set_trace()
         print '\n{:^10}|{:^20}|{:^20}|{:^20}|{:^20}|'.format(axis,'Mean','StdDev','Max','Sample Size')
         print '{:-^10}|{:-^20}|{:-^20}|{:-^20}{:^20}|'.format('','','','','')
         for key,values in sorted(axis_log.items()):
@@ -100,7 +100,7 @@ class TrialRunner(object):
 if __name__ == '__main__':
     t = TrialRunner()
     t.plotQ(qsizes=range(1,30))
-    t.plotK(kvals=range(1,1000))
+    t.plotK(kvals=[1,2,5,10,20,50,100,200,500,1000])
 
     t.print_stats('Q')
     t.print_stats('K')

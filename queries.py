@@ -11,9 +11,9 @@ def make_population(letter_counts):
       population.extend([item]*counts[item])
     return population
 
-def queries(size,K,sample_size=100):
+def queries(qsize,K,sample_size=100):
     population = make_population(counts)
-    samples = [random.sample(population,size) for k in xrange(sample_size)]
+    samples = [random.sample(population,qsize) for k in xrange(sample_size)]
     for s in samples:
         random.shuffle(s)#in-place shuffle
     queries = [''.join(s) for s in samples]
