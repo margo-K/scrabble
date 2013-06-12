@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-import cPickle
 import sys
 import os
 from scrabble import ngram,sorted_word_list,file_namer
 from functools import partial
-
-import pdb
-
 
 class GramIndexer(object):
 	def __init__(self,source,index_dir='grams',maxn=4,word_dir='words'):
@@ -16,26 +12,22 @@ class GramIndexer(object):
 		self._word_dir = word_dir
 		self._index_dir = index_dir
 		self._index = {}
+		self._maxwordlength = 0
 
 	@property
 	def ranked_words(self):
 		"""Returns a sorted list of the dictionary words and their rankings"""
-
-		return enumerate(self._dictionary) # ranked words
+		return enumerate(self._dictionary)
 
 	def supergram(self,word):
 		"""Generates lists of all n-grams of the word, in the range n=1..self.maxn"""
-
 		max_length = min(len(word),self._maxn)
 		for i in range(1,max_length+1):
 			yield ngram(word,n=i)
 
-
 	def index(self,word_rank,grams):
-		"""
-		Adds each word to the matches for each if its n-grams, for n=1...maxn
-		* uses the word's rank instead string as the value
-		"""
+		"""Adds each word to the matches for each if its n-grams, for n=1...maxn
+		* uses the word's rank instead string as the value"""
 		for gram in grams:
 			entry = self._index.setdefault(gram,[])
 			entry.append(word_rank)
@@ -52,20 +44,20 @@ class GramIndexer(object):
 				69474 => 'bourdons'
 				80707 => 'bourdon'
 				88030 => 'sourdines'
-			    93060 => 'gourdes', etc.
-			                                  """
-			
+			    93060 => 'gourdes', etc.                     """
 		for word_rank,word in self.ranked_words:
-			for grams in self.supergram(word):
-				self.index(word_rank,grams)
+				self._maxwordlength = max(self._maxwordlength,len(word))
+				for grams in self.supergram(word):
+					self.index(word_rank,grams)
 
 	def export(self,dic,folder,single_val=False):
+		"""Writes indexes to files"""
 		if not os.path.exists(folder):
 			os.makedirs(folder)
 		for key,values in dic.iteritems():
 			with open(file_namer(folder,key),'w') as f:
 				if single_val:
-					f.write(values+'\n')
+					f.write(str(values)+'\n')
 				else:
 					for value in values:
 						f.write(str(value)+'\n')
@@ -77,10 +69,11 @@ def main(argv=None):
     	word_source = sys.argv[1]
     	g = GramIndexer(word_source)
     	g.generate_index()
-    	word_index = {rank:word for rank,word in g.ranked_words}
+    	# word_index = {rank:word for rank,word in g.ranked_words}
 
-    	g.export(g._index,g._index_dir)
-    	g.export(word_index,g._word_dir,single_val=True)
+    	# g.export(g._index,g._index_dir)
+    	# g.export(word_index,g._word_dir,single_val=True)
+    	g.export({'maxwordlength':g._maxwordlength},'.',single_val=True)
     else:
     	print "Correct Usage: scrabble-indexer word-list"
 
