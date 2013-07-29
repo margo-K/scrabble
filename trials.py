@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import sys
 from queries import queries
 import math
 from timeit import Timer
@@ -11,12 +11,12 @@ grams_fn = 'ss.main([name,Q,K],printing)'
 
 def time(qsize,k,number=10,sample_size=100): # Sample size = 500
     """Returns a list of times of trials of the k top results of a query of size qsize"""
-    log = []
-    for q,k in queries(qsize=qsize,K=k,sample_size=sample_size):
-        timer = Timer(grams_fn,grams_setup.format(q,k))
-        trial_time = min(timer.repeat(3,number=number))/number
-        log.append(trial_time)
-    return log
+    return [_time(q,k,number) for q,k in queries(qsize=qsize,K=k,sample_size=sample_size)] # times each query 
+
+def _time(q,k,number):
+    """Returns the average time that one query with Q=q and K=k takes"""
+    timer = Timer(grams_fn,grams_setup.format(q,k)) # make this less hard-coded
+    return min(timer.repeat(3,number=number))/number
 
 def avg(ls):
     return sum(ls)/float(len(ls))
@@ -33,21 +33,23 @@ def stats(values):
     return avg(values),stdev(values),max(values),len(values)
 
 class TrialRunner(object):
-    def __init__(self):
+    def __init__(self,filename_k='plotallK.png',filename_q='plotallQ.png'):
         self._k_vals = [10,50,100,500,1000]
         self._q_sizes = [1,2,5,10,20]
         self._colors = ["blue","red","green","yellow","purple"]
         self._plot_title = 'Average Query Times by {}'
         self._y_label = "Time (s)"
         self._log = {'K':{},'Q':{}} #Ex: self._log['K'][10]=> all times for K=10
+        self._filename_k = filename_k
+        self._filename_q= filename_q
 
     def plotK(self,kvals):
         self._plot(x_vals=kvals,y_func=self._kys,labelstr="Q:{}",plot_vals=self._q_sizes,
-        title=self._plot_title.format('K-values'),xlabel='K',ylabel=self._y_label,filename='plotallK.png')
+        title=self._plot_title.format('K-values'),xlabel='K',ylabel=self._y_label,filename=self._filename_k)
 
     def plotQ(self,qsizes):
         self._plot(x_vals=qsizes,y_func=self._qys,labelstr="K:{}",plot_vals=self._k_vals,
-        title=self._plot_title.format('Q-Length'),xlabel='Q-Length',ylabel=self._y_label,filename='plotallQ.png')
+        title=self._plot_title.format('Q-Length'),xlabel='Q-Length',ylabel=self._y_label,filename=self._filename_q)
 
     def _kys(self,ks,qsize):
         """Returns a list of timings for k values in ks, where qsize is kept constant"""

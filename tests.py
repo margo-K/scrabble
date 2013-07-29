@@ -9,7 +9,6 @@ from brutesuggester import BruteSuggester
 class SuggesterTests(unittest.TestCase):
 	def setUp(self):
 		self.suggester = suggester.GramSuggester()
-		self.source = ''
 
 	def test_maxgrams(self):
 		self.suggester._maxn = 3
